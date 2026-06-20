@@ -6,9 +6,7 @@
 	import { base } from '$app/paths';
 
 	const links = [
-		{ name: 'About', href: `${base}/#howItWorks` },
-		{ name: 'Features', href: `${base}/#features` },
-		{ name: 'Demo', href: `${base}/editor` }
+		{ name: 'Editor', href: `${base}/` }
 	];
 </script>
 
