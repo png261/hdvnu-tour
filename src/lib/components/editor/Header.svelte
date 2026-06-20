@@ -4,8 +4,11 @@
 	import { writable } from 'svelte/store';
 	import { onMount } from 'svelte';
 
-	import { viewerSettings } from '$lib/storedInfo';
+	import { viewerSettings, initialConfig } from '$lib/storedInfo';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
+	import * as Dialog from '$lib/components/ui/dialog/index';
+	import { Input } from '$lib/components/ui/input/index';
+	import { Button } from '$lib/components/ui/button/index';
 	import MenubarLabel from '$lib/components/ui/menubar/menubar-label.svelte';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
@@ -21,12 +24,34 @@
 	let organizeHotSpotsDialogOpen = false;
 	let importDialogOpen = false;
 	let exportDialogOpen = false;
+	let tourSettingsDialogOpen = false;
 	let wipDialogOpen = false;
 </script>
 
 <OrganizeHotSpots bind:dialogOpen={organizeHotSpotsDialogOpen} />
 <Import bind:dialogOpen={importDialogOpen} class="hidden" />
 <Export bind:dialogOpen={exportDialogOpen} />
+<Dialog.Root bind:open={tourSettingsDialogOpen}>
+	<Dialog.Content class="sm:max-w-[425px]">
+		<Dialog.Header>
+			<Dialog.Title>Tour Settings</Dialog.Title>
+			<Dialog.Description>Configure global options for this panorama tour.</Dialog.Description>
+		</Dialog.Header>
+		<div class="space-y-4 py-4">
+			<div class="space-y-1">
+				<Label for="bg-sound">Background Sound URL</Label>
+				<Input id="bg-sound" bind:value={$initialConfig.backgroundSound} placeholder="https://example.com/audio.mp3" />
+			</div>
+			<div class="flex items-center space-x-2">
+				<Switch id="show-toolbar" bind:checked={$initialConfig.showControlBar} />
+				<Label for="show-toolbar">Show Bottom Control Bar in Tour</Label>
+			</div>
+		</div>
+		<Dialog.Footer>
+			<Button on:click={() => (tourSettingsDialogOpen = false)}>Close</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
 <WipAlert bind:dialogOpen={wipDialogOpen} />
 
 <Menubar.Root class="flex w-full flex-row rounded-none border-0 border-b">
@@ -54,6 +79,10 @@
 			<Menubar.Separator />
 			<Menubar.Item on:click={() => (organizeHotSpotsDialogOpen = true)}
 				>Organize HotSpots</Menubar.Item
+			>
+			<Menubar.Separator />
+			<Menubar.Item on:click={() => (tourSettingsDialogOpen = true)}
+				>Tour Settings</Menubar.Item
 			>
 			<Menubar.Separator />
 			<Menubar.Sub>

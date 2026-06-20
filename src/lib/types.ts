@@ -34,6 +34,8 @@ export interface PannellumSettings {
 	autoLoad?: boolean;
 	showControls?: boolean;
 	compass?: boolean;
+	backgroundSound?: string;
+	showControlBar?: boolean;
 }
 
 export interface PannellumSetup {

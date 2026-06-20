@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 	import {
 		selectedFile,
@@ -159,6 +159,8 @@
 			<Button variant="outline" size="icon" on:click={reload}><RefreshCcw class="h-4 w-4" /></Button
 			>
 		</div>
+
+
 	</div>
 	{#if !$pannellumViewer || !$pannellumViewer.getScene() || Object.keys($scenes).length == 0}
 		<div class="h-full w-full p-8">
