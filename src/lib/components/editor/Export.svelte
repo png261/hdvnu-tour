@@ -120,6 +120,15 @@
 		});
 	}
 
+	function blobToBase64(blob: Blob): Promise<string> {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.onloadend = () => resolve(reader.result as string);
+			reader.onerror = reject;
+			reader.readAsDataURL(blob);
+		});
+	}
+
 	async function exportToZip() {
 		exportingZip = true;
 		const toastId = toast.loading('Generating ZIP file...');
@@ -133,6 +142,9 @@
 			// Create assets folder
 			const assetsFolder = zip.folder('assets');
 			if (!assetsFolder) throw new Error('Failed to create assets folder in ZIP');
+
+			// Store base64 data for offline fallback
+			const base64Assets: Record<string, string> = {};
 
 			// Loop through all scenes to fetch images and package them
 			for (const sceneId in pannellumCopy.scenes) {
@@ -150,7 +162,12 @@
 						const response = await fetch(panoramaUrl);
 						if (!response.ok) throw new Error(`HTTP status ${response.status}`);
 						
-						fileData = await response.arrayBuffer();
+						const imageBlob = await response.blob();
+						fileData = await imageBlob.arrayBuffer();
+
+						// Get base64 string for offline fallback
+						const base64Data = await blobToBase64(imageBlob);
+						base64Assets[sceneId] = base64Data;
 
 						// Try to get actual extension from content-type header or URL
 						const contentType = response.headers.get('content-type');
@@ -225,7 +242,46 @@
 <div id="panorama-container"></div>
 
 <script>
+    // Embedded base64 assets for offline fallback (when opened via file:// protocol)
+    const base64Assets = ${JSON.stringify(base64Assets)};
+
     const setup = ${configJson};
+
+    // Helper to convert base64 to Blob URL
+    function base64ToBlobUrl(base64Data) {
+        try {
+            const parts = base64Data.split(',');
+            const mime = parts[0].match(/:(.*?);/)[1];
+            const binaryString = window.atob(parts[1]);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: mime });
+            return URL.createObjectURL(blob);
+        } catch (e) {
+            console.error('Failed to convert base64 to blob:', e);
+            return base64Data;
+        }
+    }
+
+    const isLocalFile = window.location.protocol === 'file:';
+
+    // Update panorama sources based on protocol
+    for (const sceneId in setup.scenes) {
+        if (setup.scenes.hasOwnProperty(sceneId)) {
+            const scene = setup.scenes[sceneId];
+            if (isLocalFile && base64Assets[sceneId]) {
+                console.log('Loading scene "' + sceneId + '" offline via Blob URL');
+                scene.panorama = base64ToBlobUrl(base64Assets[sceneId]);
+            } else {
+                console.log('Loading scene "' + sceneId + '" online via relative path');
+                // panorama is already set to relative path './assets/[sceneId].[ext]'
+            }
+        }
+    }
+
     pannellum.viewer('panorama-container', setup);
 <\/script>
 
