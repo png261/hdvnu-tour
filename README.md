@@ -1,1 +1,0 @@
-# hdvnu-tour
