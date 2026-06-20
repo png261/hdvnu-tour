@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { writable, derived } from 'svelte/store';
+	import { writable, derived, get } from 'svelte/store';
+	import JSZip from 'jszip';
 
 	import * as Tabs from '$lib/components/ui/tabs/index';
 	import * as Card from '$lib/components/ui/card/index';
@@ -14,7 +15,7 @@
 	import { onMount } from 'svelte';
 	import { copyText } from 'svelte-copy';
 	import { twi } from 'tw-to-css';
-	import { FileCode, FileJson, TriangleAlert } from 'lucide-svelte';
+	import { FileCode, FileJson, TriangleAlert, FolderArchive } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	const tags = Array.from({ length: 50 }).map((_, i, a) => `v1.2.0-beta.${a.length - i}`);
@@ -22,6 +23,7 @@
 	let cssFile: string = '';
 
 	let keepTailwind = true;
+	let exportingZip = false;
 
 	function removeHotSpot(index: number) {
 		hotSpotInfo.update((currentHotSpots) => {
@@ -74,8 +76,8 @@
 		return JSON.stringify(pannellumCopy, null, '\t');
 	});
 
-	function downloadFile(content: string, filename: string, type: string) {
-		const blob = new Blob([content], { type });
+	function downloadFile(content: string | Blob, filename: string, type: string) {
+		const blob = content instanceof Blob ? content : new Blob([content], { type });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
@@ -117,6 +119,137 @@
 			toast.info('CSS file copied to clipboard');
 		});
 	}
+
+	async function exportToZip() {
+		exportingZip = true;
+		const toastId = toast.loading('Generating ZIP file...');
+
+		try {
+			const zip = new JSZip();
+
+			// Parse the configuration
+			const pannellumCopy = JSON.parse(JSON.stringify(get(pannellumSetup)));
+
+			// Create assets folder
+			const assetsFolder = zip.folder('assets');
+			if (!assetsFolder) throw new Error('Failed to create assets folder in ZIP');
+
+			// Loop through all scenes to fetch images and package them
+			for (const sceneId in pannellumCopy.scenes) {
+				if (pannellumCopy.scenes.hasOwnProperty(sceneId)) {
+					const scene = pannellumCopy.scenes[sceneId];
+					const panoramaUrl = scene.panorama;
+
+					if (!panoramaUrl) continue;
+
+					let fileData: ArrayBuffer | Blob;
+					let fileExtension = 'jpg'; // default fallback
+
+					try {
+						// Fetch the panorama image data (works for blob: URLs and CORS-enabled HTTP URLs)
+						const response = await fetch(panoramaUrl);
+						if (!response.ok) throw new Error(`HTTP status ${response.status}`);
+						
+						fileData = await response.arrayBuffer();
+
+						// Try to get actual extension from content-type header or URL
+						const contentType = response.headers.get('content-type');
+						if (contentType) {
+							if (contentType.includes('png')) fileExtension = 'png';
+							else if (contentType.includes('webp')) fileExtension = 'webp';
+							else if (contentType.includes('jpeg') || contentType.includes('jpg')) fileExtension = 'jpg';
+						} else {
+							// Try to get from URL
+							const match = panoramaUrl.match(/\.(png|webp|jpe?g|gif)($|\?)/i);
+							if (match) {
+								fileExtension = match[1].toLowerCase();
+								if (fileExtension === 'jpeg') fileExtension = 'jpg';
+							}
+						}
+					} catch (err) {
+						console.error(`Failed to fetch panorama for scene ${sceneId}:`, err);
+						// For remote URLs that fail due to CORS, we can keep the remote URL as-is
+						// and skip bundling it. But if it's a local blob, fetch should always work.
+						if (panoramaUrl.startsWith('blob:')) {
+							throw new Error(`Failed to bundle local image for scene "${scene.title || sceneId}"`);
+						}
+						continue; // Keep external URL and don't bundle
+					}
+
+					// Write the file to assets folder
+					const assetFileName = `${sceneId}.${fileExtension}`;
+					assetsFolder.file(assetFileName, fileData);
+
+					// Update the configuration panorama path to be relative to index.html
+					scene.panorama = `./assets/${assetFileName}`;
+
+					// Clean up any references in hotspots
+					for (const hotspot of scene.hotSpots) {
+						delete hotspot.div;
+					}
+				}
+			}
+
+			// Add .nojekyll file
+			zip.file('.nojekyll', '# Disable Jekyll processing\n');
+
+			// Generate the configuration JSON string
+			const configJson = JSON.stringify(pannellumCopy, null, '\t');
+
+			// Create the index.html content
+			const indexHtmlContent = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>360 Panorama Tour</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"/>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"><\/script>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        #panorama-container {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="panorama-container"></div>
+
+<script>
+    const setup = ${configJson};
+    pannellum.viewer('panorama-container', setup);
+<\/script>
+
+</body>
+</html>
+`;
+
+			// Add index.html to the ZIP
+			zip.file('index.html', indexHtmlContent);
+
+			// Generate the ZIP blob
+			const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+			// Download the ZIP file
+			downloadFile(zipBlob, 'panorama-tour.zip', 'application/zip');
+
+			toast.success('ZIP file generated and download started!', { id: toastId });
+		} catch (error: any) {
+			console.error('ZIP export failed:', error);
+			toast.error(`Export failed: ${error?.message || error || 'Unknown error'}`, { id: toastId });
+		} finally {
+			exportingZip = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -128,47 +261,72 @@
 		<Card.Title>Export to Pannellum</Card.Title>
 		<!-- <Card.Description>Description</Card.Description> -->
 	</Card.Header>
-	<Card.Content class="space-y-2">
+	<Card.Content class="space-y-4">
 		<div class="flex items-center space-x-2">
 			<Switch id="airplane-mode" bind:checked={keepTailwind} />
 			<Label for="airplane-mode">Keep TailwindCSS classes</Label>
 		</div>
 
 		{#if !keepTailwind}
-			<h3 class="text-lg font-bold">
-				<FileJson class="mr-1 inline h-4 w-4" /> pannellum.config.json
-			</h3>
-			<Textarea
-				placeholder="Begin by setting up your first scene"
-				value={$jsonConfigWithoutTailwind}
-			/>
-			<div class="flex flex-wrap gap-2">
-				<Button on:click={downloadJsonConfig}>Download</Button>
-				<Button variant="secondary" on:click={copyJsonConfig}>Copy</Button>
+			<div class="space-y-2">
+				<h3 class="text-md font-bold">
+					<FileJson class="mr-1 inline h-4 w-4" /> pannellum.config.json
+				</h3>
+				<Textarea
+					placeholder="Begin by setting up your first scene"
+					value={$jsonConfigWithoutTailwind}
+				/>
+				<div class="flex flex-wrap gap-2">
+					<Button on:click={downloadJsonConfig}>Download</Button>
+					<Button variant="secondary" on:click={copyJsonConfig}>Copy</Button>
+				</div>
 			</div>
-			<h3 class="text-lg font-bold">
-				<FileCode class="mr-1 inline h-4 w-4" />
-				pannellum-hotspots.css <Badge variant="default" class="ml-2"
-					><TriangleAlert class="mr-2 h-3 w-3" />Experimental</Badge
-				>
-			</h3>
-			<Textarea placeholder="You dont have any custom hotspots." value={cssFile} />
-			<div class="flex flex-wrap gap-2">
-				<Button disabled={!cssFile} on:click={downloadCssFile}>Download</Button>
-				<Button disabled={!cssFile} variant="secondary" on:click={copyCssFile}>Copy</Button>
+
+			<div class="space-y-2">
+				<h3 class="text-md font-bold">
+					<FileCode class="mr-1 inline h-4 w-4" />
+					pannellum-hotspots.css <Badge variant="default" class="ml-2"
+						><TriangleAlert class="mr-2 h-3 w-3" />Experimental</Badge
+					>
+				</h3>
+				<Textarea placeholder="You dont have any custom hotspots." value={cssFile} />
+				<div class="flex flex-wrap gap-2">
+					<Button disabled={!cssFile} on:click={downloadCssFile}>Download</Button>
+					<Button disabled={!cssFile} variant="secondary" on:click={copyCssFile}>Copy</Button>
+				</div>
 			</div>
 		{:else}
-			<h3 class="text-lg font-bold">
-				<FileJson class="mr-1 inline h-4 w-4" /> pannellum.config.json
-			</h3>
-			<Textarea
-				placeholder="Begin by setting up your first scene"
-				value={$jsonConfigWithTailwind}
-			/>
-			<div class="flex flex-wrap gap-2">
-				<Button on:click={downloadJsonConfig}>Download</Button>
-				<Button variant="secondary" on:click={copyJsonConfig}>Copy</Button>
+			<div class="space-y-2">
+				<h3 class="text-md font-bold">
+					<FileJson class="mr-1 inline h-4 w-4" /> pannellum.config.json
+				</h3>
+				<Textarea
+					placeholder="Begin by setting up your first scene"
+					value={$jsonConfigWithTailwind}
+				/>
+				<div class="flex flex-wrap gap-2">
+					<Button on:click={downloadJsonConfig}>Download</Button>
+					<Button variant="secondary" on:click={copyJsonConfig}>Copy</Button>
+				</div>
 			</div>
 		{/if}
+
+		<div class="pt-4 border-t border-muted">
+			<div class="space-y-2">
+				<h3 class="text-md font-bold flex items-center">
+					<FolderArchive class="mr-2 h-4 w-4 text-primary" /> Portable Tour (ZIP)
+				</h3>
+				<p class="text-xs text-muted-foreground">
+					Export the entire tour as a ZIP file containing the `index.html` page and all panorama images. Extract the ZIP and open `index.html` to run the tour offline.
+				</p>
+				<Button on:click={exportToZip} disabled={exportingZip} class="w-full">
+					{#if exportingZip}
+						Generating ZIP...
+					{:else}
+						Export Tour as ZIP
+					{/if}
+				</Button>
+			</div>
+		</div>
 	</Card.Content>
 </Card.Root>
