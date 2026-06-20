@@ -37,16 +37,21 @@ export interface PannellumSettings {
 }
 
 export interface PannellumSetup {
-	default: PannellumSettings;
+	default?: PannellumSettings;
 	scenes: Record<string, Scene>;
+	firstScene?: string;
+	title?: string;
+	author?: string;
+	authorUrl?: string;
+	sceneFadeDuration?: number;
+	autoLoad?: boolean;
+	showControls?: boolean;
+	compass?: boolean;
 }
 
 export function isPannellumSetup(data: any): data is PannellumSetup {
 	if (typeof data !== 'object' || data === null) {
 		throw new Error('Data is not an object');
-	}
-	if (!data.default) {
-		throw new Error('Missing default settings');
 	}
 	if (!data.scenes || typeof data.scenes !== 'object') {
 		throw new Error('Missing or invalid scenes object');

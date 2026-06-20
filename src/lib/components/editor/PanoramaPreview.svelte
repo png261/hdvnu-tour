@@ -11,7 +11,8 @@
 		pannellumSetup,
 		selectedScene,
 		scenes,
-		pannellumViewer
+		pannellumViewer,
+		reinitViewerTrigger
 	} from '$lib/storedInfo';
 
 	import {
@@ -62,8 +63,15 @@
 			document.head.appendChild(script);
 		}
 
+		const unsubscribeReinit = reinitViewerTrigger.subscribe((val) => {
+			if (val > 0 && window.pannellum) {
+				reload();
+			}
+		});
+
 		// Clean up on component destroy
 		return () => {
+			unsubscribeReinit();
 			if ($pannellumViewer) {
 				$pannellumViewer.destroy();
 			}

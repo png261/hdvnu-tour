@@ -12,6 +12,7 @@
 	import { Github } from 'lucide-svelte';
 	import OrganizeHotSpots from './OrganizeHotSpots/Dialog.svelte';
 	import Import from './Import.svelte';
+	import Export from './Export.svelte';
 	import { Item } from '../ui/accordion';
 	import WipAlert from '../WipAlert.svelte';
 
@@ -19,11 +20,13 @@
 
 	let organizeHotSpotsDialogOpen = false;
 	let importDialogOpen = false;
+	let exportDialogOpen = false;
 	let wipDialogOpen = false;
 </script>
 
 <OrganizeHotSpots bind:dialogOpen={organizeHotSpotsDialogOpen} />
 <Import bind:dialogOpen={importDialogOpen} class="hidden" />
+<Export bind:dialogOpen={exportDialogOpen} />
 <WipAlert bind:dialogOpen={wipDialogOpen} />
 
 <Menubar.Root class="flex w-full flex-row rounded-none border-0 border-b">
@@ -31,6 +34,7 @@
 		<Menubar.Trigger>File</Menubar.Trigger>
 		<Menubar.Content>
 			<Menubar.Item on:click={() => (importDialogOpen = true)}>Import</Menubar.Item>
+			<Menubar.Item on:click={() => (exportDialogOpen = true)}>Export</Menubar.Item>
 			<Menubar.Separator />
 			<Menubar.Item on:click={() => (wipDialogOpen = true)}>About</Menubar.Item>
 			<Menubar.Item href="https://github.com/BramLeisink/visual-panorama-maker"

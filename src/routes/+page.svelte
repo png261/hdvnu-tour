@@ -25,7 +25,6 @@
 	import PanoramaPreview2 from '$lib/components/editor/PanoramaPreview.svelte';
 	import SceneSelector from '$lib/components/editor/SceneSelector.svelte';
 	import SceneList from '$lib/components/editor/SceneList.svelte';
-	import StatisticsAndExport from '$lib/components/editor/Export.svelte';
 	import * as Resizable from '$lib/components/ui/resizable/index.js';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 
@@ -110,7 +109,6 @@
 			<Resizable.PaneGroup direction="vertical">
 				<div class="flex flex-col gap-2 overflow-y-auto p-2">
 					<EditHotSpot2 />
-					<StatisticsAndExport />
 				</div>
 			</Resizable.PaneGroup>
 		</Resizable.Pane>

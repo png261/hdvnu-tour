@@ -9,11 +9,13 @@
 		selectedScene,
 		pannellumViewer,
 		viewerSettings,
-		initialConfig
+		initialConfig,
+		reinitViewerTrigger
 	} from '$lib/storedInfo';
 	import { get } from 'svelte/store';
 	import type { HotSpot, PannellumSetup } from '$lib/types';
 	import { toast } from 'svelte-sonner';
+	import JSZip from 'jszip';
 
 	import Dropzone from 'svelte-file-dropzone';
 	import { Button, buttonVariants } from '$lib/components/ui/button/index';
@@ -52,27 +54,109 @@
 			return;
 		}
 
-		try {
-			const fileText = await jsonConfig.text();
-			const parsedData: unknown = JSON.parse(fileText);
+		const toastId = toast.loading('Importing project...');
 
-			try {
-				if (isPannellumSetup(parsedData)) {
-					jsonData = parsedData as PannellumSetup;
-					$pannellumViewer.destroy;
-					console.log('Valid Pannellum setup:', jsonData);
-					initialConfig.set(jsonData.default);
-					console.log($scenes);
-					scenes.set(jsonData.scenes);
-					console.log($scenes);
-					$pannellumViewer.loadScene()
-					toast.success('Configuration loaded successfully');
+		try {
+			if (jsonConfig.name.endsWith('.zip')) {
+				// Process ZIP file
+				const zip = await JSZip.loadAsync(jsonConfig);
+				
+				// Try to find pannellum.config.json
+				const configFile = zip.file('pannellum.config.json');
+				if (!configFile) {
+					throw new Error('Could not find pannellum.config.json inside the ZIP file');
 				}
-			} catch (validationError) {
-				toast.error(`Invalid Pannellum setup: ${validationError.message}`);
+
+				const configText = await configFile.async('text');
+				const parsedData: unknown = JSON.parse(configText);
+
+				if (!isPannellumSetup(parsedData)) {
+					throw new Error('Invalid configuration format');
+				}
+
+				const importedSetup = parsedData as PannellumSetup;
+
+				// Process scenes and extract images as local Blob URLs
+				for (const sceneId in importedSetup.scenes) {
+					if (importedSetup.scenes.hasOwnProperty(sceneId)) {
+						const scene = importedSetup.scenes[sceneId];
+						const panoramaPath = scene.panorama;
+
+						if (panoramaPath && (panoramaPath.startsWith('./assets/') || panoramaPath.startsWith('assets/'))) {
+							// Find the file in assets
+							const relativePath = panoramaPath.startsWith('./') ? panoramaPath.substring(2) : panoramaPath;
+							const imageFile = zip.file(relativePath);
+							if (imageFile) {
+								const blob = await imageFile.async('blob');
+								// Create local object URL
+								const localUrl = URL.createObjectURL(blob);
+								scene.panorama = localUrl;
+							}
+						}
+					}
+				}
+
+				// Apply settings to stores
+				const settings = importedSetup.default || importedSetup;
+				initialConfig.set({
+					firstScene: settings.firstScene ?? 'circle',
+					autoLoad: settings.autoLoad ?? true,
+					sceneFadeDuration: settings.sceneFadeDuration ?? 1000,
+					showControls: settings.showControls ?? false
+				});
+				scenes.set(importedSetup.scenes);
+				
+				// Set selectedScene to firstScene to trigger viewer reload
+				const firstSceneId = settings.firstScene && importedSetup.scenes[settings.firstScene]
+					? settings.firstScene
+					: Object.keys(importedSetup.scenes)[0];
+					
+				if (firstSceneId) {
+					selectedScene.set(firstSceneId);
+				}
+
+				// Trigger Pannellum viewer reload
+				reinitViewerTrigger.update((n) => n + 1);
+
+				toast.success('ZIP Project imported successfully!', { id: toastId });
+				dialogOpen = false;
+			} else {
+				// Standalone JSON file import (original behavior)
+				const fileText = await jsonConfig.text();
+				const parsedData: unknown = JSON.parse(fileText);
+
+				if (isPannellumSetup(parsedData)) {
+					const importedSetup = parsedData as PannellumSetup;
+					const settings = importedSetup.default || importedSetup;
+					initialConfig.set({
+						firstScene: settings.firstScene ?? 'circle',
+						autoLoad: settings.autoLoad ?? true,
+						sceneFadeDuration: settings.sceneFadeDuration ?? 1000,
+						showControls: settings.showControls ?? false
+					});
+					scenes.set(importedSetup.scenes);
+					
+					// Set selectedScene to firstScene
+					const firstSceneId = settings.firstScene && importedSetup.scenes[settings.firstScene]
+						? settings.firstScene
+						: Object.keys(importedSetup.scenes)[0];
+						
+					if (firstSceneId) {
+						selectedScene.set(firstSceneId);
+					}
+
+					// Trigger Pannellum viewer reload
+					reinitViewerTrigger.update((n) => n + 1);
+					
+					toast.success('Configuration loaded successfully', { id: toastId });
+					dialogOpen = false;
+				} else {
+					toast.error('Invalid Pannellum configuration format', { id: toastId });
+				}
 			}
-		} catch (error) {
-			toast.error(`Failed to load configuration: ${error.message}`);
+		} catch (error: any) {
+			console.error('Import failed:', error);
+			toast.error(`Import failed: ${error.message || error || 'Unknown error'}`, { id: toastId });
 		}
 	}
 
@@ -114,7 +198,7 @@
 					<Dropzone
 						disableDefaultStyles
 						multiple={false}
-						accept=".json"
+						accept=".json,.zip"
 						on:drop={handleFilesSelect}
 					>
 						<div
@@ -128,7 +212,7 @@
 										<span class="font-bold">Click to upload</span> or drag and drop
 									</h2>
 
-									<p class="text-sm text-muted-foreground">JSON</p>
+									<p class="text-sm text-muted-foreground">JSON or ZIP</p>
 								</div>
 							</div>
 						</div>

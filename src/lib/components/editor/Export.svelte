@@ -17,6 +17,7 @@
 	import { twi } from 'tw-to-css';
 	import { FileCode, FileJson, TriangleAlert, FolderArchive } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import * as Dialog from '$lib/components/ui/dialog/index';
 
 	const tags = Array.from({ length: 50 }).map((_, i, a) => `v1.2.0-beta.${a.length - i}`);
 
@@ -291,6 +292,7 @@
 
 			// Add index.html to the ZIP
 			zip.file('index.html', indexHtmlContent);
+			zip.file('pannellum.config.json', configJson);
 
 			// Generate the ZIP blob
 			const zipBlob = await zip.generateAsync({ type: 'blob' });
@@ -306,83 +308,87 @@
 			exportingZip = false;
 		}
 	}
+
+	export let dialogOpen = false;
 </script>
 
 <svelte:head>
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 </svelte:head>
 
-<Card.Root>
-	<Card.Header>
-		<Card.Title>Export to Pannellum</Card.Title>
-		<!-- <Card.Description>Description</Card.Description> -->
-	</Card.Header>
-	<Card.Content class="space-y-4">
-		<div class="flex items-center space-x-2">
-			<Switch id="airplane-mode" bind:checked={keepTailwind} />
-			<Label for="airplane-mode">Keep TailwindCSS classes</Label>
+<Dialog.Root bind:open={dialogOpen}>
+	<Dialog.Content class="sm:max-w-[625px] max-h-[85vh] overflow-y-auto">
+		<Dialog.Header>
+			<Dialog.Title>Export to Pannellum</Dialog.Title>
+			<Dialog.Description>Download your project configuration or export the entire tour as a portable ZIP.</Dialog.Description>
+		</Dialog.Header>
+		<div class="space-y-4 py-4">
+			<div class="flex items-center space-x-2">
+				<Switch id="airplane-mode" bind:checked={keepTailwind} />
+				<Label for="airplane-mode">Keep TailwindCSS classes</Label>
+			</div>
+
+			{#if !keepTailwind}
+				<div class="space-y-2">
+					<h3 class="text-md font-bold">
+						<FileJson class="mr-1 inline h-4 w-4" /> pannellum.config.json
+					</h3>
+					<Textarea
+						placeholder="Begin by setting up your first scene"
+						value={$jsonConfigWithoutTailwind}
+					/>
+					<div class="flex flex-wrap gap-2">
+						<Button on:click={downloadJsonConfig}>Download</Button>
+						<Button variant="secondary" on:click={copyJsonConfig}>Copy</Button>
+					</div>
+				</div>
+
+				<div class="space-y-2">
+					<h3 class="text-md font-bold">
+						<FileCode class="mr-1 inline h-4 w-4" />
+						pannellum-hotspots.css <Badge variant="default" class="ml-2"
+							><TriangleAlert class="mr-2 h-3 w-3" />Experimental</Badge
+						>
+					</h3>
+					<Textarea placeholder="You dont have any custom hotspots." value={cssFile} />
+					<div class="flex flex-wrap gap-2">
+						<Button disabled={!cssFile} on:click={downloadCssFile}>Download</Button>
+						<Button disabled={!cssFile} variant="secondary" on:click={copyCssFile}>Copy</Button>
+					</div>
+				</div>
+			{:else}
+				<div class="space-y-2">
+					<h3 class="text-md font-bold">
+						<FileJson class="mr-1 inline h-4 w-4" /> pannellum.config.json
+					</h3>
+					<Textarea
+						placeholder="Begin by setting up your first scene"
+						value={$jsonConfigWithTailwind}
+					/>
+					<div class="flex flex-wrap gap-2">
+						<Button on:click={downloadJsonConfig}>Download</Button>
+						<Button variant="secondary" on:click={copyJsonConfig}>Copy</Button>
+					</div>
+				</div>
+			{/if}
+
+			<div class="pt-4 border-t border-muted">
+				<div class="space-y-2">
+					<h3 class="text-md font-bold flex items-center">
+						<FolderArchive class="mr-2 h-4 w-4 text-primary" /> Portable Tour (ZIP)
+					</h3>
+					<p class="text-xs text-muted-foreground">
+						Export the entire tour as a ZIP file containing the `index.html` page and all panorama images. Extract the ZIP and open `index.html` to run the tour offline.
+					</p>
+					<Button on:click={exportToZip} disabled={exportingZip} class="w-full">
+						{#if exportingZip}
+							Generating ZIP...
+						{:else}
+							Export Tour as ZIP
+						{/if}
+					</Button>
+				</div>
+			</div>
 		</div>
-
-		{#if !keepTailwind}
-			<div class="space-y-2">
-				<h3 class="text-md font-bold">
-					<FileJson class="mr-1 inline h-4 w-4" /> pannellum.config.json
-				</h3>
-				<Textarea
-					placeholder="Begin by setting up your first scene"
-					value={$jsonConfigWithoutTailwind}
-				/>
-				<div class="flex flex-wrap gap-2">
-					<Button on:click={downloadJsonConfig}>Download</Button>
-					<Button variant="secondary" on:click={copyJsonConfig}>Copy</Button>
-				</div>
-			</div>
-
-			<div class="space-y-2">
-				<h3 class="text-md font-bold">
-					<FileCode class="mr-1 inline h-4 w-4" />
-					pannellum-hotspots.css <Badge variant="default" class="ml-2"
-						><TriangleAlert class="mr-2 h-3 w-3" />Experimental</Badge
-					>
-				</h3>
-				<Textarea placeholder="You dont have any custom hotspots." value={cssFile} />
-				<div class="flex flex-wrap gap-2">
-					<Button disabled={!cssFile} on:click={downloadCssFile}>Download</Button>
-					<Button disabled={!cssFile} variant="secondary" on:click={copyCssFile}>Copy</Button>
-				</div>
-			</div>
-		{:else}
-			<div class="space-y-2">
-				<h3 class="text-md font-bold">
-					<FileJson class="mr-1 inline h-4 w-4" /> pannellum.config.json
-				</h3>
-				<Textarea
-					placeholder="Begin by setting up your first scene"
-					value={$jsonConfigWithTailwind}
-				/>
-				<div class="flex flex-wrap gap-2">
-					<Button on:click={downloadJsonConfig}>Download</Button>
-					<Button variant="secondary" on:click={copyJsonConfig}>Copy</Button>
-				</div>
-			</div>
-		{/if}
-
-		<div class="pt-4 border-t border-muted">
-			<div class="space-y-2">
-				<h3 class="text-md font-bold flex items-center">
-					<FolderArchive class="mr-2 h-4 w-4 text-primary" /> Portable Tour (ZIP)
-				</h3>
-				<p class="text-xs text-muted-foreground">
-					Export the entire tour as a ZIP file containing the `index.html` page and all panorama images. Extract the ZIP and open `index.html` to run the tour offline.
-				</p>
-				<Button on:click={exportToZip} disabled={exportingZip} class="w-full">
-					{#if exportingZip}
-						Generating ZIP...
-					{:else}
-						Export Tour as ZIP
-					{/if}
-				</Button>
-			</div>
-		</div>
-	</Card.Content>
-</Card.Root>
+	</Dialog.Content>
+</Dialog.Root>
