@@ -105,6 +105,19 @@
 	onMount(() => {
 		showDialog = checkAndSaveVersion();
 	});
+
+	function resetTour() {
+		if (typeof window !== 'undefined') {
+			if (confirm("Xác nhận đặt lại tour về mặc định? Mọi chỉnh sửa hiện tại sẽ bị xóa.")) {
+				localStorage.removeItem('tour_selected_hotspot');
+				localStorage.removeItem('tour_selected_scene');
+				localStorage.removeItem('tour_viewer_settings');
+				localStorage.removeItem('tour_initial_config');
+				localStorage.removeItem('tour_scenes');
+				window.location.reload();
+			}
+		}
+	}
 </script>
 
 <!-- Display the WipAlert dialog based on showDialog state -->
@@ -175,6 +188,12 @@
 							<div class="flex items-center space-x-2 pt-2 border-t">
 								<Switch id="sidebar-show-toolbar" bind:checked={$initialConfig.showControlBar} />
 								<Label for="sidebar-show-toolbar" class="text-xs font-medium cursor-pointer">Show Bottom Control Bar</Label>
+							</div>
+
+							<div class="pt-4 border-t">
+								<Button variant="destructive" size="sm" class="w-full text-xs font-medium" on:click={resetTour}>
+									Đặt lại tour về mặc định
+								</Button>
 							</div>
 						</Accordion.Content>
 					</Accordion.Item>

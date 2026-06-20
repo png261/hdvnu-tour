@@ -37,6 +37,7 @@
 
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { cn } from '$lib/utils';
+	import { toast } from 'svelte-sonner';
 
 	let panoElement: any;
 	let currentScene: string = '';
@@ -88,7 +89,7 @@
 		}
 	});
 
-	function hotspotPreview(hotSpotDiv: HTMLElement, args: { type: string; targetSceneId?: string; scenes: Record<string, any>; text?: string }) {
+	function hotspotPreview(hotSpotDiv: HTMLElement, args: { id?: string; type: string; targetSceneId?: string; scenes: Record<string, any>; text?: string }) {
 		hotSpotDiv.classList.add('custom-hotspot-container');
 
 		// Create the persistent label (always visible)
@@ -120,6 +121,73 @@
 
 			hotSpotDiv.appendChild(tooltip);
 		}
+
+		// Intercept click event during Command/Control dragging to prevent navigation/panning trigger
+		hotSpotDiv.addEventListener('click', (e: MouseEvent) => {
+			if (e.metaKey || e.ctrlKey) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		}, { capture: true });
+
+		// Add Cmd/Ctrl + Drag to move hotspots live in editor
+		hotSpotDiv.addEventListener('mousedown', (e: MouseEvent) => {
+			if (e.metaKey || e.ctrlKey) {
+				e.preventDefault();
+				e.stopPropagation();
+
+				const hotspotId = args.id;
+				if (!hotspotId) return;
+
+				const sceneId = $selectedScene;
+
+				const onMouseMove = (moveEvent: MouseEvent) => {
+					if (!$pannellumViewer) return;
+					const [newPitch, newYaw] = $pannellumViewer.mouseEventToCoords(moveEvent);
+					const roundedPitch = round(newPitch);
+					const roundedYaw = round(newYaw);
+
+					const viewerConfig = $pannellumViewer.getConfig();
+					const currentSceneConfig = viewerConfig.scenes[sceneId];
+					if (currentSceneConfig && currentSceneConfig.hotSpots) {
+						const hs = currentSceneConfig.hotSpots.find((h: any) => h.id === hotspotId);
+						if (hs) {
+							hs.pitch = roundedPitch;
+							hs.yaw = roundedYaw;
+						}
+					}
+					// Force reposition refresh in Pannellum
+					$pannellumViewer.setYaw($pannellumViewer.getYaw());
+				};
+
+				const onMouseUp = (upEvent: MouseEvent) => {
+					document.removeEventListener('mousemove', onMouseMove);
+					document.removeEventListener('mouseup', onMouseUp);
+
+					if (!$pannellumViewer) return;
+					const [finalPitch, finalYaw] = $pannellumViewer.mouseEventToCoords(upEvent);
+					const roundedPitch = round(finalPitch);
+					const roundedYaw = round(finalYaw);
+
+					scenes.update(prev => {
+						const sc = prev[sceneId];
+						if (sc && sc.hotSpots) {
+							const hs = sc.hotSpots.find(h => h.id === hotspotId);
+							if (hs) {
+								hs.pitch = roundedPitch;
+								hs.yaw = roundedYaw;
+							}
+						}
+						return prev;
+					});
+
+					toast.success(`Hotspot moved to Pitch: ${roundedPitch}, Yaw: ${roundedYaw}`);
+				};
+
+				document.addEventListener('mousemove', onMouseMove);
+				document.addEventListener('mouseup', onMouseUp);
+			}
+		});
 	}
 
 	function initPanorama() {
@@ -135,6 +203,7 @@
 				for (const hotspot of scene.hotSpots) {
 					hotspot.createTooltipFunc = hotspotPreview;
 					hotspot.createTooltipArgs = {
+						id: hotspot.id,
 						type: hotspot.type,
 						targetSceneId: hotspot.sceneId || '',
 						scenes: setupCopy.scenes,
