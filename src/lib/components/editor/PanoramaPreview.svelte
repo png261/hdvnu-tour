@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { get } from 'svelte/store';
 	import {
 		selectedFile,
@@ -12,7 +12,8 @@
 		selectedScene,
 		scenes,
 		pannellumViewer,
-		reinitViewerTrigger
+		reinitViewerTrigger,
+		initialConfig
 	} from '$lib/storedInfo';
 
 	import {
@@ -24,7 +25,11 @@
 		ZoomIn,
 		ZoomOut,
 		RefreshCcw,
-		Orbit
+		Orbit,
+		Grid,
+		Home,
+		Volume2,
+		VolumeX
 	} from 'lucide-svelte';
 
 	import { round } from '$lib/Pannellum';
@@ -34,6 +39,51 @@
 
 	let panoElement: any;
 	let currentScene: string = '';
+
+	let showThumbnails = true;
+	let audioElement: HTMLAudioElement | null = null;
+	let audioMuted = true;
+
+	$: if ($initialConfig.backgroundSound && typeof window !== 'undefined') {
+		if (!audioElement) {
+			audioElement = new Audio($initialConfig.backgroundSound);
+			audioElement.loop = true;
+		} else if (audioElement.src !== $initialConfig.backgroundSound) {
+			audioElement.src = $initialConfig.backgroundSound;
+			if (!audioMuted) {
+				audioElement.play().catch(e => console.log('Audio autoplay blocked or failed:', e));
+			}
+		}
+	}
+
+	function toggleAudio() {
+		if (!audioElement) return;
+		if (audioMuted) {
+			audioElement.play().catch(e => console.log('Audio autoplay blocked or failed:', e));
+			audioMuted = false;
+		} else {
+			audioElement.pause();
+			audioMuted = true;
+		}
+	}
+
+	function changeScene(sceneId: string) {
+		$selectedScene = sceneId;
+	}
+
+	function goHome() {
+		const first = $initialConfig.firstScene;
+		if (first && $scenes[first]) {
+			$selectedScene = first;
+		}
+	}
+
+	onDestroy(() => {
+		if (audioElement) {
+			audioElement.pause();
+			audioElement = null;
+		}
+	});
 
 	function initPanorama() {
 		if ($pannellumViewer) {
@@ -160,7 +210,66 @@
 			>
 		</div>
 
+		<!-- Bottom Control Bar -->
+		{#if $initialConfig.showControlBar}
+			<div class="absolute bottom-4 left-1/2 z-[10] w-[90%] max-w-[800px] -translate-x-1/2 rounded-xl bg-background/95 border border-muted p-3 shadow-2xl flex flex-col gap-3">
+				<!-- Scene thumbnails list -->
+				{#if showThumbnails}
+					<div class="flex flex-row gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent">
+						{#each Object.entries($scenes) as [sceneId, scene]}
+							<button 
+								class="flex flex-col items-center gap-1 min-w-[120px] max-w-[120px] rounded-lg border p-1 transition-all hover:bg-accent/50 { $selectedScene === sceneId ? 'border-primary bg-primary/10' : 'border-transparent' }"
+								on:click={() => changeScene(sceneId)}
+							>
+								{#if scene.panorama}
+									<img src={scene.panorama} alt={scene.title || sceneId} class="h-14 w-full rounded object-cover" />
+								{:else}
+									<div class="h-14 w-full rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground">No Pano</div>
+								{/if}
+								<span class="text-[10px] truncate w-full text-center font-medium">{scene.title || sceneId}</span>
+							</button>
+						{/each}
+					</div>
+				{/if}
 
+				<!-- Controls Row -->
+				<div class="flex flex-row items-center justify-between">
+					<!-- Title on the left -->
+					<div class="text-xs font-semibold truncate pr-4 text-foreground/80">
+						{$scenes[$selectedScene]?.title || $selectedScene}
+					</div>
+
+					<!-- Control icons on the right -->
+					<div class="flex flex-row items-center gap-1">
+						<!-- Toggle thumbnails -->
+						<Button variant="ghost" size="icon" class="h-8 w-8" on:click={() => (showThumbnails = !showThumbnails)}>
+							<Grid class="h-4.5 w-4.5" />
+						</Button>
+
+						<!-- Home -->
+						<Button variant="ghost" size="icon" class="h-8 w-8" on:click={goHome}>
+							<Home class="h-4.5 w-4.5" />
+						</Button>
+
+						<!-- Mute/Unmute toggle -->
+						{#if $initialConfig.backgroundSound}
+							<Button variant="ghost" size="icon" class="h-8 w-8" on:click={toggleAudio}>
+								{#if audioMuted}
+									<VolumeX class="h-4.5 w-4.5 text-muted-foreground" />
+								{:else}
+									<Volume2 class="h-4.5 w-4.5 text-primary animate-pulse" />
+								{/if}
+							</Button>
+						{/if}
+
+						<!-- Fullscreen -->
+						<Button variant="ghost" size="icon" class="h-8 w-8" on:click={toggleFullscreen}>
+							<Maximize class="h-4.5 w-4.5" />
+						</Button>
+					</div>
+				</div>
+			</div>
+		{/if}
 	</div>
 	{#if !$pannellumViewer || !$pannellumViewer.getScene() || Object.keys($scenes).length == 0}
 		<div class="h-full w-full p-8">
