@@ -629,11 +629,7 @@
         .logo-overlay.hidden {
             display: none !important;
         }
-        /* Custom Hotspot Preview Tooltip Styles */
-        .custom-hotspot-container {
-            position: relative;
-            cursor: pointer;
-        }
+
         .hotspot-image-preview {
             visibility: hidden;
             opacity: 0;
