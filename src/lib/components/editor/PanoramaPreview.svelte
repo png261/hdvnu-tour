@@ -18,6 +18,7 @@
 
 	import {
 		Maximize,
+		Minimize,
 		ChevronRight,
 		ChevronLeft,
 		ChevronDown,
@@ -39,6 +40,8 @@
 
 	let panoElement: any;
 	let currentScene: string = '';
+	let containerElement: HTMLDivElement;
+	let isFullscreen = false;
 
 	let showThumbnails = true;
 	let audioElement: HTMLAudioElement | null = null;
@@ -119,9 +122,20 @@
 			}
 		});
 
+		const handleFullscreenChange = () => {
+			isFullscreen = !!document.fullscreenElement;
+			if ($pannellumViewer) {
+				setTimeout(() => {
+					$pannellumViewer.resize();
+				}, 100);
+			}
+		};
+		document.addEventListener('fullscreenchange', handleFullscreenChange);
+
 		// Clean up on component destroy
 		return () => {
 			unsubscribeReinit();
+			document.removeEventListener('fullscreenchange', handleFullscreenChange);
 			if ($pannellumViewer) {
 				$pannellumViewer.destroy();
 			}
@@ -166,8 +180,14 @@
 	}
 
 	function toggleFullscreen() {
-		if ($pannellumViewer) {
-			$pannellumViewer.toggleFullscreen();
+		if (!containerElement) return;
+		if (!document.fullscreenElement) {
+			containerElement.requestFullscreen()
+				.catch(err => {
+					console.error('Error attempting to enable fullscreen:', err);
+				});
+		} else {
+			document.exitFullscreen();
 		}
 	}
 
@@ -186,8 +206,9 @@
 
 <div class="h-full w-full">
 	<div
+		bind:this={containerElement}
 		class={cn(
-			'flex h-full w-full',
+			'flex h-full w-full relative bg-black',
 			$pannellumViewer && $pannellumViewer.getScene() && Object.keys($scenes).length != 0
 				? ''
 				: 'hidden'
@@ -203,9 +224,13 @@
 					><ZoomOut class="h-4 w-4" /></Button
 				>
 			</div>
-			<Button variant="outline" size="icon" on:click={toggleFullscreen}
-				><Maximize class="h-4 w-4" /></Button
-			>
+			<Button variant="outline" size="icon" on:click={toggleFullscreen}>
+				{#if isFullscreen}
+					<Minimize class="h-4 w-4" />
+				{:else}
+					<Maximize class="h-4 w-4" />
+				{/if}
+			</Button>
 			<Button variant="outline" size="icon" on:click={reload}><RefreshCcw class="h-4 w-4" /></Button
 			>
 		</div>
@@ -264,7 +289,11 @@
 
 						<!-- Fullscreen -->
 						<Button variant="ghost" size="icon" class="h-8 w-8" on:click={toggleFullscreen}>
-							<Maximize class="h-4.5 w-4.5" />
+							{#if isFullscreen}
+								<Minimize class="h-4.5 w-4.5" />
+							{:else}
+								<Maximize class="h-4.5 w-4.5" />
+							{/if}
 						</Button>
 					</div>
 				</div>
@@ -289,6 +318,6 @@
 <style>
 	#panorama {
 		width: 100%;
-		height: calc(100vh - 2.5rem);
+		height: 100%;
 	}
 </style>
