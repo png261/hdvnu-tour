@@ -1,5 +1,32 @@
 import { writable, derived } from 'svelte/store';
 import type { HotSpot, PannellumSettings, PannellumSetup, Scene } from '$lib/types';
+
+const isBrowser = typeof window !== 'undefined';
+
+function persistentWritable<T>(key: string, initialValue: T) {
+	let storedValue: T = initialValue;
+	if (isBrowser) {
+		const json = localStorage.getItem(key);
+		if (json) {
+			try {
+				storedValue = JSON.parse(json);
+			} catch (e) {
+				console.error(`Failed to parse localStorage key "${key}":`, e);
+			}
+		}
+	}
+
+	const store = writable<T>(storedValue);
+
+	if (isBrowser) {
+		store.subscribe((value) => {
+			localStorage.setItem(key, JSON.stringify(value));
+		});
+	}
+
+	return store;
+}
+
 export const pannellumViewer = writable<any>();
 
 export const selectedFile = writable(null);
@@ -7,11 +34,11 @@ export const viewport = writable<{ yaw: number; pitch: number }>({ yaw: 0, pitch
 export const hotSpotInfo = writable<HotSpot[]>([]); // Don't use! Use hotSpotsList, a dictionary, listed below
 export const hotSpotsList = writable<Record<string, HotSpot>>({});
 
-export const selectedHotSpot = writable<string>('');
-export const selectedScene = writable<string>('');
+export const selectedHotSpot = persistentWritable<string>('tour_selected_hotspot', '');
+export const selectedScene = persistentWritable<string>('tour_selected_scene', '');
 export const reinitViewerTrigger = writable<number>(0);
 
-export const viewerSettings = writable({
+export const viewerSettings = persistentWritable('tour_viewer_settings', {
 	compass: false,
 	autoRotate: false,
 	lookAtSelected: true,
@@ -21,7 +48,7 @@ export const viewerSettings = writable({
 });
 
 export const clickedLocation = writable<{ yaw: number; pitch: number }>();
-export const initialConfig = writable<PannellumSettings>({
+export const initialConfig = persistentWritable<PannellumSettings>('tour_initial_config', {
 	firstScene: '64b60aeb033a205573dd8d59',
 	autoLoad: true,
 	sceneFadeDuration: 1000,
@@ -30,7 +57,7 @@ export const initialConfig = writable<PannellumSettings>({
 	showControlBar: true,
 	logoImage: ''
 });
-export const scenes = writable<Record<string, Scene>>({
+export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
   "64b60aeb033a205573dd8d56": {
     "title": "Sân Nghi Lễ",
     "hfov": 68,
