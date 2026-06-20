@@ -88,11 +88,63 @@
 		}
 	});
 
+	function hotspotPreview(hotSpotDiv: HTMLElement, args: { type: string; targetSceneId?: string; scenes: Record<string, any>; text?: string }) {
+		hotSpotDiv.classList.add('custom-hotspot-container');
+
+		// Create the persistent label (always visible)
+		if (args.text) {
+			const label = document.createElement('span');
+			label.classList.add('hotspot-persistent-label');
+			label.innerText = args.text;
+			hotSpotDiv.appendChild(label);
+		}
+
+		// Create flat image preview only for scene hotspots that point to a valid scene
+		if (args.type === 'scene' && args.targetSceneId) {
+			const targetScene = args.scenes[args.targetSceneId];
+			if (!targetScene) return;
+
+			const tooltip = document.createElement('div');
+			tooltip.classList.add('hotspot-image-preview');
+
+			const titleBanner = document.createElement('div');
+			titleBanner.classList.add('preview-title-banner');
+			titleBanner.innerText = targetScene.title ? targetScene.title : args.targetSceneId;
+			tooltip.appendChild(titleBanner);
+
+			const img = document.createElement('img');
+			img.classList.add('preview-image-inner');
+			img.src = targetScene.thumbnail || targetScene.panorama || '';
+			img.alt = targetScene.title || args.targetSceneId;
+			tooltip.appendChild(img);
+
+			hotSpotDiv.appendChild(tooltip);
+		}
+	}
+
 	function initPanorama() {
 		if ($pannellumViewer) {
 			$pannellumViewer.destroy();
 		}
-		$pannellumViewer = window.pannellum.viewer('panorama', $pannellumSetup);
+
+		// Inject preview and persistent tooltips into hotspots
+		const setupCopy = JSON.parse(JSON.stringify($pannellumSetup));
+		for (const sceneId in setupCopy.scenes) {
+			const scene = setupCopy.scenes[sceneId];
+			if (scene.hotSpots) {
+				for (const hotspot of scene.hotSpots) {
+					hotspot.createTooltipFunc = hotspotPreview;
+					hotspot.createTooltipArgs = {
+						type: hotspot.type,
+						targetSceneId: hotspot.sceneId || '',
+						scenes: setupCopy.scenes,
+						text: hotspot.text || ''
+					};
+				}
+			}
+		}
+
+		$pannellumViewer = (window as any).pannellum.viewer('panorama', setupCopy);
 
 		panoElement.addEventListener('click', (event: any) => {
 			const [clickPitch, clickYaw] = $pannellumViewer.mouseEventToCoords(event);

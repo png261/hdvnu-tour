@@ -629,6 +629,91 @@
         .logo-overlay.hidden {
             display: none !important;
         }
+        /* Custom Hotspot Preview Tooltip Styles */
+        .custom-hotspot-container {
+            position: relative;
+            cursor: pointer;
+        }
+        .hotspot-image-preview {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 42px;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            width: 240px;
+            height: 160px;
+            background: #000;
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            z-index: 10000;
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+        }
+        .hotspot-image-preview::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: rgba(255, 255, 255, 0.9) transparent;
+            display: block;
+            width: 0;
+            z-index: 10001;
+        }
+        .custom-hotspot-container:hover .hotspot-image-preview {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .preview-title-banner {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.65);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 10002;
+            text-align: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .preview-image-inner {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .hotspot-persistent-label {
+            display: inline-block !important;
+            visibility: visible !important;
+            position: absolute;
+            bottom: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -798,7 +883,57 @@
         }
     }
 
+    function hotspotPreview(hotSpotDiv, args) {
+        hotSpotDiv.classList.add('custom-hotspot-container');
+
+        // Create the persistent label (always visible)
+        if (args.text) {
+            const label = document.createElement('span');
+            label.classList.add('hotspot-persistent-label');
+            label.innerText = args.text;
+            hotSpotDiv.appendChild(label);
+        }
+
+        // Create flat image preview only for scene hotspots that point to a valid scene
+        if (args.type === 'scene' && args.targetSceneId) {
+            const targetScene = args.scenes[args.targetSceneId];
+            if (!targetScene) return;
+
+            const tooltip = document.createElement('div');
+            tooltip.classList.add('hotspot-image-preview');
+
+            const titleBanner = document.createElement('div');
+            titleBanner.classList.add('preview-title-banner');
+            titleBanner.innerText = targetScene.title ? targetScene.title : args.targetSceneId;
+            tooltip.appendChild(titleBanner);
+
+            const img = document.createElement('img');
+            img.classList.add('preview-image-inner');
+            img.src = targetScene.thumbnail || targetScene.panorama || '';
+            img.alt = targetScene.title || args.targetSceneId;
+            tooltip.appendChild(img);
+
+            hotSpotDiv.appendChild(tooltip);
+        }
+    }
+
     function startTour() {
+        // Inject preview and persistent tooltips into hotspots
+        for (const sceneId in setup.scenes) {
+            const scene = setup.scenes[sceneId];
+            if (scene.hotSpots) {
+                for (const hotspot of scene.hotSpots) {
+                    hotspot.createTooltipFunc = hotspotPreview;
+                    hotspot.createTooltipArgs = {
+                        type: hotspot.type,
+                        targetSceneId: hotspot.sceneId || '',
+                        scenes: setup.scenes,
+                        text: hotspot.text || ''
+                    };
+                }
+            }
+        }
+
         viewer = pannellum.viewer('panorama-container', setup);
         
         if (showControlBar) {
