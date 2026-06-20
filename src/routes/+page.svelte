@@ -33,10 +33,15 @@
 		pannellumViewer,
 		selectedHotSpot,
 		viewerSettings,
-		scenes
+		scenes,
+		initialConfig
 	} from '$lib/storedInfo';
 	import WipAlert from '$lib/components/WipAlert.svelte';
 	import Header from '$lib/components/editor/Header.svelte';
+	import * as Accordion from '$lib/components/ui/accordion/index';
+	import { Input } from '$lib/components/ui/input/index';
+	import Switch from '$lib/components/ui/switch/switch.svelte';
+	import Label from '$lib/components/ui/label/label.svelte';
 
 	// Define types for panorama and scene data
 	type PanoramaData = {
@@ -90,19 +95,39 @@
 <div id="body">
 	<Resizable.PaneGroup direction="horizontal" class="h-full w-full">
 		<Resizable.Pane defaultSize={25} class="">
-			<Resizable.PaneGroup direction="vertical">
-				<div class="p-2">
-					<SceneSelector />
-				</div>
-				<Separator />
-				<Resizable.Pane defaultSize={75} class="p-2">
-					<HotSpotsList />
-				</Resizable.Pane>
-				<Resizable.Handle withHandle />
-				<Resizable.Pane class="p-2">
-					<SceneList />
-				</Resizable.Pane>
-			</Resizable.PaneGroup>
+			<div class="h-full w-full overflow-y-auto p-3">
+				<Accordion.Root value={["scenes", "hotspots", "more"]} type="multiple" class="w-full space-y-2">
+					<Accordion.Item value="scenes" class="border rounded-lg px-3 py-1">
+						<Accordion.Trigger class="hover:no-underline font-semibold text-sm py-2">Scenes</Accordion.Trigger>
+						<Accordion.Content class="pt-2 pb-3">
+							<SceneSelector />
+							<Separator class="my-3" />
+							<SceneList />
+						</Accordion.Content>
+					</Accordion.Item>
+					
+					<Accordion.Item value="hotspots" class="border rounded-lg px-3 py-1">
+						<Accordion.Trigger class="hover:no-underline font-semibold text-sm py-2">Hotspots</Accordion.Trigger>
+						<Accordion.Content class="pt-2 pb-3">
+							<HotSpotsList />
+						</Accordion.Content>
+					</Accordion.Item>
+					
+					<Accordion.Item value="more" class="border rounded-lg px-3 py-1">
+						<Accordion.Trigger class="hover:no-underline font-semibold text-sm py-2">More</Accordion.Trigger>
+						<Accordion.Content class="pt-2 pb-3 space-y-4">
+							<div class="space-y-1.5">
+								<Label for="sidebar-bg-sound" class="text-xs text-muted-foreground">Background Sound URL</Label>
+								<Input id="sidebar-bg-sound" bind:value={$initialConfig.backgroundSound} placeholder="https://example.com/audio.mp3" class="h-8 text-xs" />
+							</div>
+							<div class="flex items-center space-x-2 pt-1">
+								<Switch id="sidebar-show-toolbar" bind:checked={$initialConfig.showControlBar} />
+								<Label for="sidebar-show-toolbar" class="text-xs font-medium cursor-pointer">Show Bottom Control Bar</Label>
+							</div>
+						</Accordion.Content>
+					</Accordion.Item>
+				</Accordion.Root>
+			</div>
 		</Resizable.Pane>
 		<Resizable.Handle withHandle />
 		<Resizable.Pane defaultSize={50}>
