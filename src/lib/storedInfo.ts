@@ -49,14 +49,15 @@ export const viewerSettings = persistentWritable('tour_viewer_settings', {
 
 export const clickedLocation = writable<{ yaw: number; pitch: number }>();
 export const initialConfig = persistentWritable<PannellumSettings>('tour_initial_config', {
-	firstScene: '64b60aeb033a205573dd8d59',
-	autoLoad: true,
-	sceneFadeDuration: 1000,
-	showControls: false,
-	backgroundSound: 'https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/asset/FN6N9rFnt3HilZPvh7wJ.mp3',
-	showControlBar: true,
-	logoImage: ''
-});
+  "firstScene": "64b60aeb033a205573dd8d59",
+  "autoLoad": true,
+  "sceneFadeDuration": 1000,
+  "showControls": false,
+  "backgroundSound": "./assets/background-audio.mp3",
+  "showControlBar": true,
+  "logoImage": ""
+}
+);
 export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
   "64b60aeb033a205573dd8d56": {
     "title": "Sân Nghi Lễ",
@@ -64,7 +65,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -11,
     "yaw": 0,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_CLzVauvTLnAvcubdWvou.webp",
+    "panorama": "./assets/64b60aeb033a205573dd8d56.webp",
     "hotSpots": [
       {
         "id": "64b60d6a033a205573dd8d5f",
@@ -115,7 +116,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -11,
     "yaw": 2,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_T3ojr9e9lW2Ap524sVSB.webp",
+    "panorama": "./assets/64b60aeb033a205573dd8d57.webp",
     "hotSpots": [
       {
         "id": "64b60b24033a205573dd8d5a",
@@ -136,12 +137,12 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -39,
     "yaw": 1,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_U29tJYhd27IxJZ7e1Wcz.webp",
+    "panorama": "./assets/64b60aeb033a205573dd8d59.webp",
     "hotSpots": [
       {
         "id": "64b60ccc033a205573dd8d5b",
-        "pitch": -22.285,
-        "yaw": -2.46,
+        "pitch": 24.2,
+        "yaw": -0.1,
         "text": "Sân Nghi Lễ",
         "type": "scene",
         "sceneId": "64b60aeb033a205573dd8d56",
@@ -151,8 +152,8 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
       },
       {
         "id": "64b60ce5033a205573dd8d5c",
-        "pitch": -16.448,
-        "yaw": 37.536,
+        "pitch": 18.8,
+        "yaw": 38.6,
         "text": "Đền Tưởng Niệm",
         "type": "scene",
         "sceneId": "64b60aeb033a205573dd8d58",
@@ -162,8 +163,8 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
       },
       {
         "id": "64bb44273ac0811fa5dbae41",
-        "pitch": -74.41,
-        "yaw": -14.624,
+        "pitch": 80.3,
+        "yaw": -16.2,
         "text": "Cổng Chính",
         "type": "scene",
         "sceneId": "64b60aeb033a205573dd8d57",
@@ -180,8 +181,8 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
       },
       {
         "id": "64bf4ecf033a205573dd8df9",
-        "pitch": -16.535,
-        "yaw": 26.157,
+        "pitch": 19.5,
+        "yaw": 26.8,
         "text": "Sân Khánh Tiết",
         "type": "scene",
         "sceneId": "64bb798b3ac0811fa5dbae75",
@@ -191,8 +192,8 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
       },
       {
         "id": "64bf4ed6033a205573dd8dfa",
-        "pitch": -14.014,
-        "yaw": -1.483,
+        "pitch": 16.3,
+        "yaw": -0.8,
         "text": "Hoa Viên",
         "type": "scene",
         "sceneId": "64bb76a23ac0811fa5dbae6e",
@@ -202,8 +203,8 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
       },
       {
         "id": "6583b37de9120f49f7ddbd91",
-        "pitch": -14.615,
-        "yaw": -24.576,
+        "pitch": 17.1,
+        "yaw": -23.3,
         "text": "Khu A",
         "type": "scene",
         "sceneId": "64bb43b23ac0811fa5dbae3f",
@@ -213,8 +214,8 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
       },
       {
         "id": "6583b384e9120f49f7ddbd92",
-        "pitch": -8.113,
-        "yaw": -18.437,
+        "pitch": 11.8,
+        "yaw": -19.6,
         "text": "Khu B",
         "type": "scene",
         "sceneId": "64b6c9ca3ac0811fa5dbac97",
@@ -224,16 +225,16 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
       },
       {
         "id": "6583b38ee9120f49f7ddbd93",
-        "pitch": -7.065,
-        "yaw": -10.161,
+        "pitch": 12.8,
+        "yaw": -10.5,
         "text": "Khu C",
         "type": "scene",
         "sceneId": "64b6cd0f3ac0811fa5dbac9b"
       },
       {
         "id": "6583b395e9120f49f7ddbd94",
-        "pitch": -9.41,
-        "yaw": 10.1,
+        "pitch": 14.1,
+        "yaw": 8.8,
         "text": "Khu D",
         "type": "scene",
         "sceneId": "64bb5bc33ac0811fa5dbae4e",
@@ -243,8 +244,8 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
       },
       {
         "id": "6583b3aae9120f49f7ddbd95",
-        "pitch": -12.931,
-        "yaw": 19.05,
+        "pitch": 15.7,
+        "yaw": 19.7,
         "text": "Khu E",
         "type": "scene",
         "sceneId": "64bb58643ac0811fa5dbae47",
@@ -254,8 +255,8 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
       },
       {
         "id": "6583b461e9120f49f7ddbd9b",
-        "pitch": -20.154,
-        "yaw": 34.615,
+        "pitch": 21.6,
+        "yaw": 37.5,
         "text": "Sân Đền",
         "type": "scene",
         "sceneId": "6583b421e9120f49f7ddbd9a",
@@ -265,8 +266,8 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
       },
       {
         "id": "6583b4a2e9120f49f7ddbd9c",
-        "pitch": -5.353,
-        "yaw": 0.306,
+        "pitch": 9.1,
+        "yaw": -0.1,
         "text": "Tượng Đài",
         "type": "scene",
         "sceneId": "6583b3f4e9120f49f7ddbd98"
@@ -279,7 +280,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -26,
     "yaw": -4,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_8LqeHmLHOZsrXeHVEb4T.webp",
+    "panorama": "./assets/64b60aeb033a205573dd8d58.webp",
     "hotSpots": [
       {
         "id": "64b60e31033a205573dd8d60",
@@ -311,7 +312,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -22,
     "yaw": 179,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_8amJIaugPtkXhiLZXgwV.webp",
+    "panorama": "./assets/64b6c9ca3ac0811fa5dbac97.webp",
     "hotSpots": [
       {
         "id": "64b6cd4d3ac0811fa5dbac9c",
@@ -361,7 +362,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -31,
     "yaw": -1,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_0KNu2yQCERgxw0UteWUH.webp",
+    "panorama": "./assets/64b6cd0f3ac0811fa5dbac9b.webp",
     "hotSpots": [
       {
         "id": "64b6cd853ac0811fa5dbac9d",
@@ -400,7 +401,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -24,
     "yaw": 125,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_Av9N4l6dF7nIdPl9WHg6.webp",
+    "panorama": "./assets/64bb43b23ac0811fa5dbae3f.webp",
     "hotSpots": [
       {
         "id": "64bb449d3ac0811fa5dbae43",
@@ -439,7 +440,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -12,
     "yaw": 101,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_If5Pb8hYfVszktm3ZCfP.webp",
+    "panorama": "./assets/64bb58643ac0811fa5dbae47.webp",
     "hotSpots": [
       {
         "id": "64bb587d3ac0811fa5dbae48",
@@ -497,7 +498,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -35,
     "yaw": 3,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_9MntzXTxardP23eosgyh.webp",
+    "panorama": "./assets/64bb5bc33ac0811fa5dbae4e.webp",
     "hotSpots": [
       {
         "id": "64bb5c043ac0811fa5dbae50",
@@ -547,7 +548,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -57,
     "yaw": 2,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_lnBduxKItrJvI6Uq1AN9.webp",
+    "panorama": "./assets/64bb76a23ac0811fa5dbae6e.webp",
     "hotSpots": [
       {
         "id": "6583b572e9120f49f7ddbd9f",
@@ -576,7 +577,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -8,
     "yaw": -142,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_skjeD6h5oPGR6O3J9QpV.webp",
+    "panorama": "./assets/64bb798b3ac0811fa5dbae75.webp",
     "hotSpots": [
       {
         "id": "64bb79ab3ac0811fa5dbae76",
@@ -630,7 +631,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -1,
     "yaw": 4,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_EFVRLgp7CCG3HwLihpdl.webp",
+    "panorama": "./assets/6583b3f4e9120f49f7ddbd98.webp",
     "hotSpots": [
       {
         "id": "6583b63de9120f49f7ddbda0",
@@ -722,7 +723,7 @@ export const scenes = persistentWritable<Record<string, Scene>>('tour_scenes', {
     "pitch": -21,
     "yaw": 1,
     "type": "equirectangular",
-    "panorama": "https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/pano/preview/4000x_xvswCBMLraQ9MxROa3v0.webp",
+    "panorama": "./assets/6583b421e9120f49f7ddbd9a.webp",
     "hotSpots": [
       {
         "id": "6583b515e9120f49f7ddbd9d",
