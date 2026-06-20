@@ -47,7 +47,7 @@
 								<CircleHelp class="h-5 w-5 text-muted-foreground" />
 							{/if}
 						</span>
-						<span class="flex-1 text-left">{hotSpot.id}</span>
+						<span class="flex-1 text-left truncate">{hotSpot.text || hotSpot.id}</span>
 						<Button
 							variant="destructive"
 							size="icon"

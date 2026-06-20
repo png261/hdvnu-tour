@@ -31,7 +31,7 @@
 	let pitch = 0;
 	let selected = { label: $scenes[$selectedScene].title || $selectedScene, value: $selectedScene };
 	let scene = $selectedScene;
-	let id = 'MyHotSpot';
+	let id = '';
 	let description = '';
 
 	let dialogOpen = false;
@@ -43,13 +43,16 @@
 		position = currentYawPitch();
 		yaw = position.yaw;
 		pitch = position.pitch;
+
+		// Automatically generate a unique ID
+		id = 'hotspot_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
 	}
 
 	function addHotSpotToScene() {
 		let hotSpot: HotSpot = { id: id, yaw: yaw, pitch: pitch, type: 'info', text: description };
 		if (addHotSpot(hotSpot, scene)) {
 			dialogOpen = false;
-			toast.success(`'${id}' succesfully added to scene.`);
+			toast.success(`'${description || id}' succesfully added to scene.`);
 			$selectedScene = scene;
 			$selectedHotSpot = id;
 		}
@@ -64,10 +67,6 @@
 			<Dialog.Description>Add a HotSpot to the interactive panorama.</Dialog.Description>
 		</Dialog.Header>
 		<div class="grid gap-4 py-4">
-			<div class="grid grid-cols-4 items-center gap-4">
-				<Label for="id" class="text-right">ID</Label>
-				<Input id="id" bind:value={id} class="col-span-3" />
-			</div>
 			<div class="grid grid-cols-4 items-center gap-4">
 				<Label for="id" class="text-right">Scene</Label>
 				<Select.Root
