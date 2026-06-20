@@ -208,6 +208,49 @@
 				}
 			}
 
+			let base64Audio = '';
+			let audioFileName = '';
+
+			// Handle background audio
+			if (pannellumCopy.backgroundSound) {
+				try {
+					const audioUrl = pannellumCopy.backgroundSound;
+					const response = await fetch(audioUrl);
+					if (response.ok) {
+						const audioBlob = await response.blob();
+						const audioData = await audioBlob.arrayBuffer();
+
+						// Get base64 string for offline fallback
+						base64Audio = await blobToBase64(audioBlob);
+
+						// Determine file extension
+						let audioExtension = 'mp3';
+						const audioMime = audioBlob.type;
+						if (audioMime) {
+							if (audioMime.includes('wav')) audioExtension = 'wav';
+							else if (audioMime.includes('ogg')) audioExtension = 'ogg';
+							else if (audioMime.includes('webm')) audioExtension = 'webm';
+							else if (audioMime.includes('mpeg') || audioMime.includes('mp3')) audioExtension = 'mp3';
+						} else {
+							// Try to get from URL
+							const match = audioUrl.match(/\.(mp3|wav|ogg|webm)($|\?)/i);
+							if (match) audioExtension = match[1].toLowerCase();
+						}
+
+						audioFileName = `background-audio.${audioExtension}`;
+
+						// Write the file to assets folder inside the ZIP
+						assetsFolder.file(audioFileName, audioData);
+
+						// Update the configuration backgroundSound path to be relative to index.html
+						pannellumCopy.backgroundSound = `./assets/${audioFileName}`;
+					}
+				} catch (err) {
+					console.error('Failed to bundle background audio:', err);
+					// For remote URLs that fail due to CORS, keep remote URL intact and don't bundle
+				}
+			}
+
 			// Add .nojekyll file
 			zip.file('.nojekyll', '# Disable Jekyll processing\n');
 
@@ -528,6 +571,7 @@
 <script>
     // Embedded base64 assets for offline fallback (when opened via file:// protocol)
     const base64Assets = ${JSON.stringify(base64Assets)};
+    const base64Audio = "${base64Audio}";
 
     const setup = ${configJson};
 
@@ -563,6 +607,17 @@
                 console.log('Loading scene "' + sceneId + '" online via relative path');
                 // panorama is already set to relative path './assets/[sceneId].[ext]'
             }
+        }
+    }
+
+    // Update background sound source based on protocol
+    if (setup.backgroundSound) {
+        if (isLocalFile && base64Audio) {
+            console.log('Loading background audio offline via Blob URL');
+            setup.backgroundSound = base64ToBlobUrl(base64Audio);
+        } else {
+            console.log('Loading background audio online via relative path');
+            // backgroundSound is already set to relative path './assets/background-audio.[ext]'
         }
     }
 

@@ -26,6 +26,18 @@
 	let exportDialogOpen = false;
 	let tourSettingsDialogOpen = false;
 	let wipDialogOpen = false;
+
+	import { toast } from 'svelte-sonner';
+
+	function handleAudioUpload(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (file) {
+			const objectUrl = URL.createObjectURL(file);
+			$initialConfig.backgroundSound = objectUrl;
+			toast.success(`Audio file "${file.name}" uploaded successfully.`);
+		}
+	}
 </script>
 
 <OrganizeHotSpots bind:dialogOpen={organizeHotSpotsDialogOpen} />
@@ -38,11 +50,23 @@
 			<Dialog.Description>Configure global options for this panorama tour.</Dialog.Description>
 		</Dialog.Header>
 		<div class="space-y-4 py-4">
-			<div class="space-y-1">
-				<Label for="bg-sound">Background Sound URL</Label>
-				<Input id="bg-sound" bind:value={$initialConfig.backgroundSound} placeholder="https://example.com/audio.mp3" />
+			<div class="space-y-2">
+				<Label for="bg-sound">Background Sound</Label>
+				<Input id="bg-sound" bind:value={$initialConfig.backgroundSound} placeholder="Paste audio URL or upload file" />
+				
+				<div class="flex items-center gap-2">
+					<Button variant="outline" size="sm" class="flex-1 cursor-pointer relative">
+						Choose Audio File
+						<input type="file" accept="audio/*" class="absolute inset-0 opacity-0 cursor-pointer" on:change={handleAudioUpload} />
+					</Button>
+					{#if $initialConfig.backgroundSound}
+						<Button variant="destructive" size="sm" on:click={() => ($initialConfig.backgroundSound = '')}>
+							Remove
+						</Button>
+					{/if}
+				</div>
 			</div>
-			<div class="flex items-center space-x-2">
+			<div class="flex items-center space-x-2 pt-2">
 				<Switch id="show-toolbar" bind:checked={$initialConfig.showControlBar} />
 				<Label for="show-toolbar">Show Bottom Control Bar in Tour</Label>
 			</div>

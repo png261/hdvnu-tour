@@ -42,6 +42,18 @@
 	import { Input } from '$lib/components/ui/input/index';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
+	import { Button } from '$lib/components/ui/button/index';
+	import { toast } from 'svelte-sonner';
+
+	function handleAudioUpload(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (file) {
+			const objectUrl = URL.createObjectURL(file);
+			$initialConfig.backgroundSound = objectUrl;
+			toast.success(`Audio file "${file.name}" uploaded successfully.`);
+		}
+	}
 
 	// Define types for panorama and scene data
 	type PanoramaData = {
@@ -116,9 +128,21 @@
 					<Accordion.Item value="more" class="border rounded-lg px-3 py-1">
 						<Accordion.Trigger class="hover:no-underline font-semibold text-sm py-2">More</Accordion.Trigger>
 						<Accordion.Content class="pt-2 pb-3 space-y-4">
-							<div class="space-y-1.5">
-								<Label for="sidebar-bg-sound" class="text-xs text-muted-foreground">Background Sound URL</Label>
-								<Input id="sidebar-bg-sound" bind:value={$initialConfig.backgroundSound} placeholder="https://example.com/audio.mp3" class="h-8 text-xs" />
+							<div class="space-y-2">
+								<Label for="sidebar-bg-sound" class="text-xs text-muted-foreground">Background Sound</Label>
+								<Input id="sidebar-bg-sound" bind:value={$initialConfig.backgroundSound} placeholder="Paste audio URL or upload file" class="h-8 text-xs" />
+								
+								<div class="flex items-center gap-2">
+									<Button variant="outline" size="sm" class="h-7 text-xs flex-1 cursor-pointer relative">
+										Choose Audio File
+										<input type="file" accept="audio/*" class="absolute inset-0 opacity-0 cursor-pointer" on:change={handleAudioUpload} />
+									</Button>
+									{#if $initialConfig.backgroundSound}
+										<Button variant="destructive" size="sm" class="h-7 text-xs px-2" on:click={() => ($initialConfig.backgroundSound = '')}>
+											Remove
+										</Button>
+									{/if}
+								</div>
 							</div>
 							<div class="flex items-center space-x-2 pt-1">
 								<Switch id="sidebar-show-toolbar" bind:checked={$initialConfig.showControlBar} />
