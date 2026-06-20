@@ -83,6 +83,39 @@
 		selectedScene.set(selectedSceneId);
 	}
 
+	function handleThumbnailUpload(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (file) {
+			const objectUrl = URL.createObjectURL(file);
+			sceneSettings.thumbnail = objectUrl;
+			toast.success(`Thumbnail uploaded successfully.`);
+		}
+	}
+
+	function captureCurrentView() {
+		if ($pannellumViewer && $pannellumViewer.getRenderer()) {
+			try {
+				const pitch = $pannellumViewer.getPitch() * Math.PI / 180;
+				const yaw = $pannellumViewer.getYaw() * Math.PI / 180;
+				const hfov = $pannellumViewer.getHfov() * Math.PI / 180;
+				
+				const imageDataUrl = $pannellumViewer.getRenderer().render(pitch, yaw, hfov, { returnImage: true });
+				if (imageDataUrl) {
+					sceneSettings.thumbnail = imageDataUrl;
+					toast.success(`Captured current panorama view as thumbnail.`);
+				} else {
+					toast.error("Failed to capture image data.");
+				}
+			} catch (err) {
+				console.error("Capture viewport failed:", err);
+				toast.error("Failed to capture viewport. Make sure the scene is fully loaded.");
+			}
+		} else {
+			toast.error("Panorama viewer is not ready.");
+		}
+	}
+
 	let sheetOpen = false;
 </script>
 
@@ -174,6 +207,44 @@
 							</div>
 						</div>
 					</Dropzone>
+				{/if}
+			</div>
+
+			<div class="space-y-1.5 pt-4 border-t">
+				<Label class="text-xs text-muted-foreground">Scene Thumbnail (Optional)</Label>
+				{#if sceneSettings && sceneSettings.thumbnail}
+					<div class="flex flex-row rounded-lg border p-2 bg-muted/40">
+						<img
+							src={sceneSettings.thumbnail}
+							alt="Thumbnail"
+							class="mr-3 h-14 w-24 rounded object-cover border bg-black"
+						/>
+						<div class="flex flex-col justify-center">
+							<span class="text-xs text-muted-foreground font-semibold">Custom Thumbnail</span>
+							<button
+								type="button"
+								class="text-xs text-destructive text-left hover:underline mt-1"
+								on:click={() => (sceneSettings.thumbnail = undefined)}
+							>
+								Remove
+							</button>
+						</div>
+					</div>
+				{:else}
+					<div class="rounded-lg border border-dashed p-3 text-center bg-muted/20">
+						<span class="text-xs text-muted-foreground block mb-2">No custom thumbnail set (uses panorama fallback)</span>
+						<div class="flex gap-2 justify-center">
+							<Button variant="outline" size="sm" class="text-xs h-7 cursor-pointer relative">
+								Upload Image
+								<input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" on:change={handleThumbnailUpload} />
+							</Button>
+							{#if $pannellumViewer && $pannellumViewer.getRenderer()}
+								<Button variant="outline" size="sm" class="text-xs h-7" on:click={captureCurrentView}>
+									Capture Current View
+								</Button>
+							{/if}
+						</div>
+					</div>
 				{/if}
 			</div>
 		</div>

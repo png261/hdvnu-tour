@@ -27,7 +27,8 @@ export const initialConfig = writable<PannellumSettings>({
 	sceneFadeDuration: 1000,
 	showControls: false,
 	backgroundSound: 'https://smarttravel-vr.mobifone.vn/vr-api/uploads/user/6417e3cfafa35e54a1da0e50/media/asset/FN6N9rFnt3HilZPvh7wJ.mp3',
-	showControlBar: true
+	showControlBar: true,
+	logoImage: ''
 });
 export const scenes = writable<Record<string, Scene>>({
   "64b60aeb033a205573dd8d56": {

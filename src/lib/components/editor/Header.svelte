@@ -38,6 +38,16 @@
 			toast.success(`Audio file "${file.name}" uploaded successfully.`);
 		}
 	}
+
+	function handleLogoUpload(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (file) {
+			const objectUrl = URL.createObjectURL(file);
+			$initialConfig.logoImage = objectUrl;
+			toast.success(`Logo image "${file.name}" uploaded successfully.`);
+		}
+	}
 </script>
 
 <OrganizeHotSpots bind:dialogOpen={organizeHotSpotsDialogOpen} />
@@ -66,7 +76,25 @@
 					{/if}
 				</div>
 			</div>
-			<div class="flex items-center space-x-2 pt-2">
+
+			<div class="space-y-2 pt-2 border-t">
+				<Label for="logo-image">Logo Image</Label>
+				<Input id="logo-image" bind:value={$initialConfig.logoImage} placeholder="Paste logo URL or upload file" />
+				
+				<div class="flex items-center gap-2">
+					<Button variant="outline" size="sm" class="flex-1 cursor-pointer relative">
+						Choose Logo Image
+						<input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" on:change={handleLogoUpload} />
+					</Button>
+					{#if $initialConfig.logoImage}
+						<Button variant="destructive" size="sm" on:click={() => ($initialConfig.logoImage = '')}>
+							Remove
+						</Button>
+					{/if}
+				</div>
+			</div>
+
+			<div class="flex items-center space-x-2 pt-2 border-t">
 				<Switch id="show-toolbar" bind:checked={$initialConfig.showControlBar} />
 				<Label for="show-toolbar">Show Bottom Control Bar in Tour</Label>
 			</div>

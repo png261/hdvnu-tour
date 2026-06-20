@@ -23,6 +23,7 @@ export interface Scene {
 	type: string;
 	panorama: string | undefined;
 	hotSpots: Array<HotSpot>;
+	thumbnail?: string;
 }
 
 export interface PannellumSettings {
@@ -36,6 +37,7 @@ export interface PannellumSettings {
 	compass?: boolean;
 	backgroundSound?: string;
 	showControlBar?: boolean;
+	logoImage?: string;
 }
 
 export interface PannellumSetup {

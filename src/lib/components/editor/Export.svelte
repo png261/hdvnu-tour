@@ -251,6 +251,100 @@
 				}
 			}
 
+			let base64Logo = '';
+			const base64Thumbnails = {};
+			
+			// Create a thumbnails folder inside assets if we have custom thumbnails
+			let thumbnailsFolder = null;
+
+			// Handle Logo Image
+			if (pannellumCopy.logoImage) {
+				try {
+					const logoUrl = pannellumCopy.logoImage;
+					const response = await fetch(logoUrl);
+					if (response.ok) {
+						const logoBlob = await response.blob();
+						const logoData = await logoBlob.arrayBuffer();
+
+						// Get base64 string for offline fallback
+						base64Logo = await blobToBase64(logoBlob);
+
+						// Determine file extension
+						let logoExtension = 'png'; // default fallback
+						const logoMime = logoBlob.type;
+						if (logoMime) {
+							if (logoMime.includes('png')) logoExtension = 'png';
+							else if (logoMime.includes('webp')) logoExtension = 'webp';
+							else if (logoMime.includes('jpeg') || logoMime.includes('jpg')) logoExtension = 'jpg';
+							else if (logoMime.includes('gif')) logoExtension = 'gif';
+							else if (logoMime.includes('svg')) logoExtension = 'svg';
+						} else {
+							const match = logoUrl.match(/\.(png|webp|jpe?g|gif|svg)($|\?)/i);
+							if (match) logoExtension = match[1].toLowerCase();
+						}
+
+						const logoFileName = `logo.${logoExtension}`;
+
+						// Write file to assets folder inside ZIP
+						assetsFolder.file(logoFileName, logoData);
+
+						// Update configuration path to relative path
+						pannellumCopy.logoImage = `./assets/${logoFileName}`;
+					}
+				} catch (err) {
+					console.error('Failed to bundle logo image:', err);
+				}
+			}
+
+			// Handle Scene Thumbnails
+			for (const sceneId in pannellumCopy.scenes) {
+				if (pannellumCopy.scenes.hasOwnProperty(sceneId)) {
+					const scene = pannellumCopy.scenes[sceneId];
+					const thumbUrl = scene.thumbnail;
+
+					if (!thumbUrl) continue;
+
+					try {
+						const response = await fetch(thumbUrl);
+						if (response.ok) {
+							const thumbBlob = await response.blob();
+							const thumbData = await thumbBlob.arrayBuffer();
+
+							// Get base64 string for offline fallback
+							const base64Data = await blobToBase64(thumbBlob);
+							base64Thumbnails[sceneId] = base64Data;
+
+							// Determine file extension
+							let thumbExtension = 'jpg'; // default fallback
+							const thumbMime = thumbBlob.type;
+							if (thumbMime) {
+								if (thumbMime.includes('png')) thumbExtension = 'png';
+								else if (thumbMime.includes('webp')) thumbExtension = 'webp';
+								else if (thumbMime.includes('jpeg') || thumbMime.includes('jpg')) thumbExtension = 'jpg';
+							} else {
+								const match = thumbUrl.match(/\.(png|webp|jpe?g)($|\?)/i);
+								if (match) thumbExtension = match[1].toLowerCase();
+							}
+
+							if (!thumbnailsFolder) {
+								thumbnailsFolder = assetsFolder.folder('thumbnails');
+							}
+							
+							const thumbFileName = `${sceneId}-thumb.${thumbExtension}`;
+							thumbnailsFolder.file(thumbFileName, thumbData);
+
+							// Update configuration path to relative path
+							scene.thumbnail = `./assets/thumbnails/${thumbFileName}`;
+						}
+					} catch (err) {
+						console.error(`Failed to bundle thumbnail for scene ${sceneId}:`, err);
+						if (thumbUrl.startsWith('blob:')) {
+							throw new Error(`Failed to bundle local thumbnail for scene "${scene.title || sceneId}"`);
+						}
+					}
+				}
+			}
+
 			// Add .nojekyll file
 			zip.file('.nojekyll', '# Disable Jekyll processing\n');
 
@@ -518,12 +612,32 @@
         .btn-primary:hover {
             background: #0066cc;
         }
+        /* Centered top logo */
+        .logo-overlay {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10001;
+            max-width: 160px;
+            max-height: 64px;
+            object-fit: contain;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            transition: opacity 0.3s ease;
+        }
+        .logo-overlay.hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
 
 <div id="tour-container">
     <div id="panorama-container"></div>
+    
+    <!-- Centered Top Logo -->
+    <img id="logo-overlay" class="logo-overlay hidden" alt="Logo" />
     
     <!-- Audio Permission Modal -->
     <div id="audio-modal" class="modal-overlay">
@@ -572,6 +686,8 @@
     // Embedded base64 assets for offline fallback (when opened via file:// protocol)
     const base64Assets = ${JSON.stringify(base64Assets)};
     const base64Audio = "${base64Audio}";
+    const base64Logo = "${base64Logo}";
+    const base64Thumbnails = ${JSON.stringify(base64Thumbnails)};
 
     const setup = ${configJson};
 
@@ -618,6 +734,19 @@
         } else {
             console.log('Loading background audio online via relative path');
             // backgroundSound is already set to relative path './assets/background-audio.[ext]'
+        }
+    }
+
+    // Update logo source based on protocol
+    const logoOverlay = document.getElementById('logo-overlay');
+    if (setup.logoImage) {
+        logoOverlay.classList.remove('hidden');
+        if (isLocalFile && base64Logo) {
+            console.log('Loading logo offline via Blob URL');
+            logoOverlay.src = base64ToBlobUrl(base64Logo);
+        } else {
+            console.log('Loading logo online via relative path');
+            logoOverlay.src = setup.logoImage;
         }
     }
 
@@ -702,7 +831,16 @@
                 
                 const img = document.createElement('img');
                 img.className = 'thumb-img';
-                img.src = sceneConfig.panorama;
+                
+                let thumbSrc = sceneConfig.thumbnail || sceneConfig.panorama;
+                if (isLocalFile) {
+                    if (sceneConfig.thumbnail && base64Thumbnails[sceneId]) {
+                        thumbSrc = base64ToBlobUrl(base64Thumbnails[sceneId]);
+                    } else if (base64Assets[sceneId]) {
+                        thumbSrc = base64ToBlobUrl(base64Assets[sceneId]);
+                    }
+                }
+                img.src = thumbSrc;
                 img.alt = sceneConfig.title || sceneId;
                 
                 const titleSpan = document.createElement('span');

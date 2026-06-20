@@ -215,6 +215,15 @@
 		)}
 	>
 		<div bind:this={panoElement} id="panorama" />
+
+		<!-- Logo Overlay -->
+		{#if $initialConfig.logoImage}
+			<img 
+				src={$initialConfig.logoImage} 
+				alt="Tour Logo" 
+				class="absolute top-4 left-1/2 -translate-x-1/2 z-[1001] max-w-[160px] max-h-[64px] object-contain pointer-events-none drop-shadow-md" 
+			/>
+		{/if}
 		<div id="controls" class="z-2 absolute flex flex-col gap-1 p-2">
 			<div class="flex flex-col">
 				<Button variant="outline" size="icon" class="rounded-b-none" on:click={zoomIn}
@@ -246,7 +255,9 @@
 								class="flex flex-col items-center gap-1 min-w-[120px] max-w-[120px] rounded-lg border p-1 transition-all hover:bg-accent/50 { $selectedScene === sceneId ? 'border-primary bg-primary/10' : 'border-transparent' }"
 								on:click={() => changeScene(sceneId)}
 							>
-								{#if scene.panorama}
+								{#if scene.thumbnail}
+									<img src={scene.thumbnail} alt={scene.title || sceneId} class="h-14 w-full rounded object-cover" />
+								{:else if scene.panorama}
 									<img src={scene.panorama} alt={scene.title || sceneId} class="h-14 w-full rounded object-cover" />
 								{:else}
 									<div class="h-14 w-full rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground">No Pano</div>
