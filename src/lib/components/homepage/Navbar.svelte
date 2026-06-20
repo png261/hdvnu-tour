@@ -3,17 +3,18 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Sheet from '$lib/components/ui/sheet/index';
 	import ModeDropdown from './ModeDropdown.svelte';
+	import { base } from '$app/paths';
 
 	const links = [
-		{ name: 'About', href: '#howItWorks' },
-		{ name: 'Features', href: '#features' },
-		{ name: 'Demo', href: '/editor' }
+		{ name: 'About', href: `${base}/#howItWorks` },
+		{ name: 'Features', href: `${base}/#features` },
+		{ name: 'Demo', href: `${base}/editor` }
 	];
 </script>
 
 <header class="sticky top-0 z-40 w-full border-b-[1px] bg-white dark:bg-background">
 	<div class="container hidden items-center justify-between p-2 md:flex">
-		<a href="/">
+		<a href="{base}/">
 			<h2 class="flex h-full flex-row items-center text-xl font-bold">
 				<Orbit class="mr-2 h-6 w-6 text-primary" />Visual Panorama Maker
 			</h2>

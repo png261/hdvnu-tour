@@ -1,5 +1,6 @@
 <script>
 	import { Orbit } from 'lucide-svelte';
+	import { base } from '$app/paths';
 </script>
 
 <footer id="footer">
@@ -7,7 +8,7 @@
 
 	<section class="container grid grid-cols-2 gap-x-12 gap-y-8 py-20 md:grid-cols-4 xl:grid-cols-6">
 		<div class="col-span-full xl:col-span-2">
-			<a rel="noreferrer noopener" href="/" class="flex flex-row items-center text-xl font-bold">
+			<a rel="noreferrer noopener" href="{base}/" class="flex flex-row items-center text-xl font-bold">
 				<Orbit class="mr-2 h-6 w-6 text-primary" />Visual Panorama Maker
 			</a>
 		</div>

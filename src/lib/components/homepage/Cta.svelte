@@ -1,5 +1,6 @@
 <script>
 	import Button from '$lib/components/ui/button/button.svelte';
+	import { base } from '$app/paths';
 </script>
 
 <section id="cta" class="my-24 bg-muted/50 py-16 sm:my-32">
@@ -19,7 +20,7 @@
 		</div>
 
 		<div class="space-y-4 lg:col-start-2">
-			<Button class="w-full md:w-auto" href="/editor">View the Demo</Button>
+			<Button class="w-full md:w-auto" href="{base}/editor">View the Demo</Button>
 			<Button variant="outline" class="w-full md:w-auto" href="#features">Explore Features</Button>
 		</div>
 	</div>

@@ -4,6 +4,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Card from '$lib/components/ui/card/index';
 	import { page } from '$app/stores'; // Importing the page store to access the current URL
+	import { base } from '$app/paths';
 
 	export let data;
 
@@ -27,10 +28,10 @@
 							{#each posts as post}
 								<a
 									class="flex w-full items-center rounded-md p-2 hover:underline {currentPath ===
-									post.slug
+									base + post.slug
 										? 'bg-muted'
 										: ''}"
-									href={post.slug}>{post.title}</a
+									href="{base}{post.slug}">{post.title}</a
 								>
 							{/each}
 						</div>

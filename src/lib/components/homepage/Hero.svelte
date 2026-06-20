@@ -2,6 +2,7 @@
 	import { Github } from 'lucide-svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import HeroCards from './HeroCards.svelte';
+	import { base } from '$app/paths';
 </script>
 
 <section class="container grid place-items-center gap-10 py-20 md:py-32 lg:grid-cols-2">
@@ -34,7 +35,7 @@
 		</p>
 
 		<div class="space-y-4 md:space-x-4 md:space-y-0">
-			<Button class="w-full md:w-1/3" data-sveltekit-reload href="/editor">View Demo</Button>
+			<Button class="w-full md:w-1/3" data-sveltekit-reload href="{base}/editor">View Demo</Button>
 			<Button
 				rel="noreferrer noopener"
 				href="https://github.com/BramLeisink/visual-panorama-maker"
